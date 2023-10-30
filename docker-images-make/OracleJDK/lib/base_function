@@ -1,0 +1,113 @@
+#!/bin/echo
+#
+
+# -------------------------------------------------------------------------------
+# # Function name: prompt_msg()
+# # Description  : Pring prompt message to screen
+# # Usage        : prompt_msg "INFO" "Hello World"
+# # -------------------------------------------------------------------------------
+#
+function prompt_msg()
+{
+   [ $# -ne 2 ] && printf "\033[31mUsage: prompt_msg message_level message_info\n\033[0m"
+      
+   local msg_level=$1
+   local msg_info=$2               
+   [ ${msg_level} == "INFO" ] && printf "${msg_level}: ${msg_info}\n"
+   [ ${msg_level} == "WARN" ] && printf "\033[33m${msg_level}: ${msg_info}\n\033[0m"
+   [ ${msg_level} == "ERROR" ] && printf "\033[31m${msg_level}: ${msg_info}\n\033[0m"
+}
+
+# -------------------------------------------------------------------------------
+# # Function name: writelog()
+# # Description : Write script run log into log file
+# # -------------------------------------------------------------------------------
+function writelog()
+{
+    if [ $# -ne 3 ];then
+    echo  "Usage: writelog message_level message_info logfile"
+    fi
+    local log_file=$1
+    local debug_level=$2
+    local messages=$3
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [${debug_level}] ${messages}"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [${debug_level}] ${messages}" >> ${log_file}
+}
+
+
+# -------------------------------------------------------------------------------
+# # # Function name: getValues_accordKey()
+# # # Description : Get the value in the file according to the key
+# # # -------------------------------------------------------------------------------
+#
+function getValues_accordKey()
+{   
+    local conf_file=$1
+    local section=$2
+    local key=$3
+    if [ $# -ne 3 ] || [ ! -f ${conffile} ]
+    then
+        prompt_msg ERROR  "请检查调用getValues_accordKey时参数传入是否正确!"
+        exit
+    else 
+        values=$(sed -n '/\['${section}'\]/,/^$/p' ${conf_file} |grep -Ev '\[|\]|^$'|grep ${key} | awk -F '=' '{print $2}')
+        echo ${values}
+    fi
+}
+
+
+# -------------------------------------------------------------------------------
+# # # Function name:  dir_exist()
+# # # Description : Determine whether the directory exists
+# # # -------------------------------------------------------------------------------
+#
+function dir_exist()
+{
+    local dir=$1
+    if [ ! -d ${dir} ]
+    then
+        mkdir -p ${dir}
+    fi
+}
+
+# -------------------------------------------------------------------------------
+# # # Function name:  file_exist()
+# # # Description : Determine whether the file exists
+# # # -------------------------------------------------------------------------------
+#
+function file_exist()
+{
+    local file=$1
+    if [ ! -f ${file} ]
+    then
+        prompt_msg ERROR  "文件${file}不存在，请确认是否影响部署"
+    fi
+}
+
+# -------------------------------------------------------------------------------
+# # # Function name:  copy()
+# # # Description : Judge whether the file or directory to be copied exists. If it exists, start copying
+# # # -------------------------------------------------------------------------------
+#
+function copy()
+{
+    #需要拷贝的目录或文件的绝对路径
+    local absolute_path_directory=$1
+    local target_directory=$2
+    if [ ! -d ${absolute_path_directory} ]
+    then 
+        if [ ! -f ${absolute_path_directory} ]
+        then
+            prompt_msg ERROR "${absolute_path_directory}不存在,请检查"
+            exit
+        fi
+    fi
+    if [ ! -d ${target_directory} ]
+    then
+       prompt_msg ERROR "目录${target_directory}不存在,请检查"
+       exit
+    fi
+    #拷贝文件或目录到指定文件
+    cp -r ${absolute_path_directory} ${target_directory}
+}
+

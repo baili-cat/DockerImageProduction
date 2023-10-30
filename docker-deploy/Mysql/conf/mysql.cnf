@@ -1,0 +1,23 @@
+[client]
+default-character-set=utf8mb4
+
+[mysqld]
+default-time-zone='+8:00'
+character-set-server=utf8mb4
+server-id=100
+max_connections=1000
+lower_case_table_names=0
+binlog_format=mixed
+log-bin=mysql-bin
+#binlog文件保留7天
+binlog_expire_logs_seconds=604800
+#max_binlog_size=100m
+#binlog_cache_size=4m
+#max_binlog_cache_size=512m
+
+#general-log=ON
+#general-log-file=/var/lib/mysql/execute.log
+
+#for8.0
+sql_mode = ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+collation_server=utf8mb4_general_ci

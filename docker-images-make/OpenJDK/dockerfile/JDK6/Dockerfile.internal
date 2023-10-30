@@ -1,0 +1,44 @@
+
+#暂时不适用
+# https://hub.docker.com/r/anapsix/alpine-java
+# https://github.com/anapsix/docker-alpine-java/blob/master/8/201b09/server-jre/unlimited/Dockerfile
+FROM alpine:3.12.1
+MAINTAINER baili@baili.com
+
+# Java Version and other ENV
+ENV JAVA_HOME=/opt/jdk \
+    JRE_HOME=/opt/jdk/jre \
+    PATH=${PATH}:/opt/jdk/bin \
+    GLIBC_REPO=https://github.com/sgerrand/alpine-pkg-glibc \
+    GLIBC_VERSION=2.29-r0 \
+    LANG=zh_CN.UTF-8 \
+    LC_ALL=zh_CN.UTF-8 \
+    TZ=Asia/Shanghai
+
+# do all in one step
+RUN set -ex && \
+    apk -U upgrade && \
+    # 安装(ttf-dejavu fontconfig)解决异常：Could not initialize class sun.awt.X11FontManager
+    apk add libstdc++ curl ca-certificates bash unzip vim tzdata net-tools busybox-extras ttf-dejavu fontconfig && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
+    #ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    for pkg in glibc-${GLIBC_VERSION} glibc-bin-${GLIBC_VERSION} glibc-i18n-${GLIBC_VERSION}; do curl -sSL ${GLIBC_REPO}/releases/download/${GLIBC_VERSION}/${pkg}.apk -o /tmp/${pkg}.apk; done && \
+    apk add --allow-untrusted /tmp/*.apk && \
+    rm -v /tmp/*.apk && \
+    ( /usr/glibc-compat/bin/localedef --force --inputfile POSIX --charmap UTF-8 "$LANG" || true ) && \
+    echo "export LANG=$LANG" > /etc/profile.d/locale.sh && \
+    /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib && \
+    apk del glibc-i18n && \
+    rm -rf /tmp/* /var/cache/apk/* && \
+    echo 'hosts: files mdns4_minimal [NOTFOUND=return] dns mdns4' >> /etc/nsswitch.conf
+
+# download jre
+RUN set -ex && \
+    curl -fSL "${URL}" -o /jre.bin && \
+    chmod +x /jre.bin && \
+    ./jre.bin && \
+    rm -rf ./jre.bin && \
+    mkdir -p ${JAVA_HOME} && \
+    mv /jre*  ${JAVA_HOME}/jre && \
+    ln -s ${JAVA_HOME}/jre/bin /opt/jdk/bin && \
+    java -version

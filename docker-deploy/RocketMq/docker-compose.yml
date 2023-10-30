@@ -1,0 +1,47 @@
+version: '3'
+services:
+  {serviceName}::
+    image: {imageName}
+    container_name: {serviceName}
+    ports:
+      - {serverPort}:{dockerPort}
+    volumes:
+      - ./rocketmq/logs:/home/rocketmq/logs
+      - ./rocketmq/store:/home/rocketmq/store
+    command: sh mqnamesrv
+  broker:
+    image: {imageName}
+    container_name: rmqbroker
+    ports:
+      - 10909:10909
+      - 10911:10911
+      - 10912:10912
+    volumes:
+      - /opt/rocketmq/logs:/home/rocketmq/logs
+      - /opt/rocketmq/store:/home/rocketmq/store
+      - /opt/rocketmq/conf/broker.conf:/opt/rocketmq-4.4.0/conf/broker.conf
+    #command: sh mqbroker -n namesrv:9876
+    command: sh mqbroker -n namesrv:9876 -c ../conf/broker.conf
+    depends_on:
+      - namesrv
+    environment:
+      - JAVA_HOME=/usr/lib/jvm/jre
+  console:
+    image: styletang/rocketmq-console-ng
+    container_name: rocketmq-console-ng
+    ports:
+      - 8087:8080
+    depends_on:
+      - namesrv
+    environment:
+      - JAVA_OPTS= -Dlogging.level.root=info   -Drocketmq.namesrv.addr=rmqnamesrv:9876
+      - Dcom.rocketmq.sendMessageWithVIPChannel=false
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./data/rabbitmq:/bitnami/rabbitmq/mnesia
+      - ./nodeExport:/nodeExport
+# 采用网络模式时可配合ports使用，testOps部署后默认名为testOps_network_default，可通过接口参数修改
+networks:
+  default:
+    external:
+      name: testOps_network_default

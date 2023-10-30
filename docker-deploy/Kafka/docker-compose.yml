@@ -1,0 +1,45 @@
+version: '3'
+services:
+  {serviceName}:
+    image: {imageName}
+    container_name: {serviceName}
+    restart: always
+    ports:
+      - {serverPort}:{dockerPort}
+      #- 9091:9091 #jmx
+      - 9308:9308 #metrics
+    environment:
+      #Kafka启动报异常InconsistentClusterIdException解决方案：https://www.codenong.com/cs110545325/
+      EXPORTER_ENABLE: "{exporter_enable}"
+      NODE_EXPORTER_PATH: "{node_exporter_path}"
+      BAILI_XCENTER_SERVER: "{baili_xcenter_server}"
+      BAILI_XCENTER_ORGCODE: "{baili_xcenter_orgcode}"
+      BAILI_APPLICATION_SERVER: "{baili_application_server}"
+      BAILI_COLLECTOR_SERVER: "{baili_collector_server}"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_PORT: "{serverPort}"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:{serverPort}"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://{KAFKA_ADDRESS}:{serverPort}"
+      KAFKA_CFG_BROKER_ID: "1"
+      KAFKA_CFG_DELETE_TOPIC_ENABLE: "true"
+      KAFKA_CFG_NUM_PARTITIONS: "1"
+      KAFKA_CFG_DEFAULT_REPLICATION_FACTOR: "1"
+      KAFKA_CFG_ZOOKEEPER_CONNECT: "{ZOOKEEPER_ADDRESS}:{ZOOKEEPER_PORT}"
+      KAFKA_CFG_ZOOKEEPER_CONNECTION_TIMEOUT_MS: "60000"
+      KAFKA_CFG_LOG_DIRS: "/kafka/kafka-logs"
+      #全局Topic日志数据保留时长: 3小时
+      KAFKA_CFG_LOG_RETENTION_HOURS: "3"
+      #单个Topic日志数据保留大小: 10G
+      KAFKA_CFG_LOG_RETENTION_BYTES: "10737418240"
+      KAFKA_HEAP_OPTS: "-Xmx2g -Xms2g"
+      KAFKA_MESSAGE_MAX_BYTES: "20971520"
+      #KAFKA_JMX_OPTS: "-Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.port=9091 -Dcom.sun.management.jmxremote.rmi.port=9091 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Djava.rmi.server.hostname=192.168.102.101"
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./data/kafka:/kafka/kafka-logs
+      - ./nodeExport:/nodeExport
+# 采用网络模式时可配合ports使用，testOps部署后默认名为testOps_network_default，可通过接口参数修改
+networks:
+  default:
+    external:
+      name: testOps_network_default

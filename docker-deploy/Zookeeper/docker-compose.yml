@@ -1,0 +1,39 @@
+version: '3'
+services:
+  {serviceName}:
+    image: {imageName}
+    container_name:  {serviceName}
+    restart: always
+#    user: "root"
+    network_mode: host
+    ports:
+      - {serverPort}:{dockerPort} #client port
+    #    - 9141:9141 #metrics
+    #    - 2888:2888 #follower port
+    #    - 3888:3888 #election port
+    environment:
+      ZOO_DATA_DIR: "/data/data"
+      ZOO_DATA_LOG_DIR: "/data/datalog"
+      ZOO_TICK_TIME: "2000"
+      ZOO_INIT_LIMIT: "5"
+      ZOO_SYNC_LIMIT: "2"
+      ZOO_AUTOPURGE_PURGEINTERVAL: "1"
+      ZOO_AUTOPURGE_SNAPRETAINCOUNT: "3"
+      ZOO_MAX_CLIENT_CNXNS: "300"
+      ZOO_ADMINSERVER_ENABLED: "false"
+      ZOO_4LW_COMMANDS_WHITELIST: "mntr"
+      #ZOO_CFG_EXTRA: "4lw.commands.whitelist=mntr" #zookeeper-exporter依赖[mntr]命令
+      ZOO_CFG_EXTRA: "
+            metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider
+            metricsProvider.httpPort=9141
+            metricsProvider.exportJvmInfo=true
+            "
+      ZOO_STANDALONE_ENABLED: "true"
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./data/zookeeper:/data
+# 采用网络模式时可配合ports使用，testOps部署后默认名为testOps_network_default，可通过接口参数修改
+networks:
+  default:
+    external:
+      name: testOps_network_default

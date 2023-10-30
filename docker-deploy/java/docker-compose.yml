@@ -1,0 +1,39 @@
+version: '3'
+services:
+   #服务名称
+   {serviceName}:
+        #docker镜像的名称
+        image: {imageName}
+        #容器启动后的名称，与服务名称保持一致
+        container_name: {serviceName}
+        restart: always
+        network_mode: host
+        tty: true
+        command: [ "{commands}" ]
+        #host模式端口无效
+#        ports:
+#            - {serverPort}:{dockerPort} # http
+        #https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck
+        #目前Docker官方不支持容器健康检查未通过时自动重启容器策略
+        #https://github.com/moby/moby/issues/28400, https://github.com/moby/moby/pull/22719
+#        healthcheck:
+#            test: [ "CMD", "curl", "-f", "http://localhost:17950/actuator/health" ]
+#            interval: 30s
+#            timeout: 10s
+#            retries: 3
+            #start_period: 60s
+        environment:
+            APP_NAME: {serviceName}
+            BAILI_APP_CODE: {BAILI_APP_CODE}
+            BAILI_AGENT_XCENTER_SERVER: {baili_agent_xcenter_server}
+        volumes:
+            - /etc/localtime:/etc/localtime
+            - ./bin/:/opt/mock/bin/
+            - ./conf/:/opt/mock/conf/
+            - ./source/:/opt/mock/source/
+            - ./logs:/opt/mock/logs
+# 采用网络模式时可配合ports使用，testOps部署后默认名为testOps_network_default，可通过接口参数修改
+#networks:
+#  default:
+#    external:
+#      name: testOps_network_default

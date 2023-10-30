@@ -1,0 +1,1 @@
+tar -czvf javaDockerTemplates.tar.gz ./bin docker-compose.yml image service.sh source conf

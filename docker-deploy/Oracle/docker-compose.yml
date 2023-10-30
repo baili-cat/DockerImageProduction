@@ -1,0 +1,16 @@
+version: '3'
+services:
+  {serviceName}:
+    image: {imageName}
+    container_name: {serviceName}
+    restart: always
+    ports:
+      - {serverPort}:{dockerPort}
+#      - 9104:9104  #metrics
+    environment:
+      ORACLE_EXPORTER_ENABLE: "{oracle_exporter_enable}"
+      ORACLE_USER_NAME: "{oracle_user_name}"
+      ORACLE_ROOT_PASSWORD: "{oracle_root_password}"
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./data/oracle:/var/lib/mysql

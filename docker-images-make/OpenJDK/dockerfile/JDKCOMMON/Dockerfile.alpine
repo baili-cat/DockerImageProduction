@@ -1,0 +1,47 @@
+# https://hub.docker.com/r/anapsix/alpine-java
+# https://github.com/anapsix/docker-alpine-java/blob/master/8/201b09/server-jre/unlimited/Dockerfile
+# 由于alpine-pkg-glibc不支持arm64，所以无法构建arm64的jdk环境，当前Dockerfile仅用于构建amd64镜像
+# 使用这个arm64版本，镜像构建之后java命令无法运行，从官方下载的openjdk8也不能运行(https://github.com/Rjerk/alpine-pkg-glibc/releases/download/2.30.r0-arm64)
+# 注意: 使用alpine:3.15.5版本，当涉及fontconfig系统函数调用时会导致Java进程崩溃（paas生成验证码场景, 非必现，部分服务器运行有问题）
+FROM alpine:3.12.1
+MAINTAINER baili@baili.com
+
+ARG ARCH=amd64
+ARG URL
+
+# Java Version and other ENV
+ENV JAVA_HOME=/opt/jdk \
+    JRE_HOME=/opt/jdk/jre \
+    PATH=${PATH}:/opt/jdk/bin \
+    GLIBC_REPO=https://github.com/sgerrand/alpine-pkg-glibc \
+    GLIBC_VERSION=2.29-r0 \
+    LANG=zh_CN.UTF-8 \
+    LC_ALL=zh_CN.UTF-8 \
+    TZ=Asia/Shanghai
+
+# busybox-extras: https://busybox.net/downloads/BusyBox.html
+# do all in one step
+RUN set -ex && \
+    apk -U upgrade && \
+    # 安装(ttf-dejavu fontconfig)解决异常：Could not initialize class sun.awt.X11FontManager
+    apk add libstdc++ ca-certificates bash curl tzdata busybox-extras ttf-dejavu fontconfig && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
+    for pkg in glibc-${GLIBC_VERSION} glibc-bin-${GLIBC_VERSION} glibc-i18n-${GLIBC_VERSION}; do curl -sSL ${GLIBC_REPO}/releases/download/${GLIBC_VERSION}/${pkg}.apk -o /tmp/${pkg}.apk; done && \
+    apk add --allow-untrusted /tmp/*.apk && \
+    rm -v /tmp/*.apk && \
+    ( /usr/glibc-compat/bin/localedef --force --inputfile POSIX --charmap UTF-8 "$LANG" || true ) && \
+    echo "export LANG=$LANG" > /etc/profile.d/locale.sh && \
+    /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib && \
+    apk del glibc-i18n && \
+    rm -rf /tmp/* /var/cache/apk/* && \
+    echo 'hosts: files mdns4_minimal [NOTFOUND=return] dns mdns4' >> /etc/nsswitch.conf
+
+# download jre
+RUN set -ex && \
+    curl -fSL "${URL}" -o /jre.tar.gz && \
+    mkdir -p ${JAVA_HOME} && \
+    tar -zxf /jre.tar.gz -C ${JAVA_HOME} && \
+    mv ${JAVA_HOME}/jre* ${JAVA_HOME}/jre && \
+    ln -s ${JAVA_HOME}/jre/bin /opt/jdk/bin && \
+    java -version && \
+    rm -f /jre.tar.gz

@@ -1,0 +1,30 @@
+FROM centos:7.9.2009
+MAINTAINER baili@baili.com
+
+ARG ARCH=amd64
+ARG URL
+
+# Java Version and other ENV
+ENV JAVA_HOME=/opt/jdk \
+    JRE_HOME=/opt/jdk/jre \
+    PATH=${PATH}:/opt/jdk/bin \
+    JAVA_AGENT_APTH=/opt \
+    DEBIAN_FRONTEND=noninteractive \
+    LANG=zh_CN.UTF-8 \
+    LC_ALL=zh_CN.UTF-8
+
+RUN set -ex && \
+    yum install -y wget tzdata unzip net-tools telnet nc kde-l10n-Chinese glibc-common && \
+    yum clean all && \
+    ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    localedef -c -f UTF-8 -i zh_CN zh_CN.utf8
+
+# download jre
+RUN set -ex && \
+    curl -fSL "${URL}" -o /jre.tar.gz && \
+    mkdir -p ${JAVA_HOME} && \
+    tar -zxf /jre.tar.gz -C ${JAVA_HOME} && \
+    mv ${JAVA_HOME}/jre* ${JAVA_HOME}/jre && \
+    ln -s ${JAVA_HOME}/jre/bin /opt/jdk/bin && \
+    java -version && \
+    rm -f /jre.tar.gz

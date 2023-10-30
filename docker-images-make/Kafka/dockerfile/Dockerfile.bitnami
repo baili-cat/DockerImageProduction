@@ -1,0 +1,43 @@
+
+ARG KAFKARDOCKERTAG=latest
+
+FROM centos:7 as builder
+
+ARG ARCH=amd64
+#ENV DOWNLOAD_URL "https://github.com/danielqsj/kafka_exporter/releases/download/v1.2.0/kafka_exporter-1.2.0.linux-${ARCH}.tar.gz"
+#RUN set -ex && \
+#    curl -fSL "${DOWNLOAD_URL}" -o /exporter.tar.gz && \
+ #   tar -zxf /exporter.tar.gz -C / && \
+ #   mv /kafka_exporter-1.2.0.linux-amd64/kafka_exporter /
+
+# Dockerfile: https://github.com/31z4/zookeeper-docker/blob/master/3.6.3/Dockerfile
+# Exporter: Internal
+# Metrics: :9141/metrics
+FROM bitnami/kafka:${KAFKARDOCKERTAG}
+MAINTAINER baili@baili.com
+
+#USER root
+#COPY --from=builder /kafka_exporter  /bin/kafka_exporter
+
+# Time zone
+RUN set -ex && \
+    mkdir -p /var/lib/apt/lists/partial && \
+    install_packages tzdata netcat && \
+    ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+RUN set -ex && \
+    mkdir -p /kafka/kafka-logs /var/log/kafka && \
+    chmod g+rwX /kafka/kafka-logs /var/log/kafka
+
+## 重写entrypoint入口命令
+#COPY docker-entrypoint-wrapper.sh /
+#RUN chmod +x /docker-entrypoint-wrapper.sh
+#USER 1001
+#ENTRYPOINT ["/docker-entrypoint-wrapper.sh"]
+
+#重写applicationnodeExport命令
+COPY docker-entrypoint-applicationNodeExport.sh /
+RUN chmod +x /docker-entrypoint-applicationNodeExport.sh
+USER 1001
+ENTRYPOINT ["/docker-entrypoint-applicationNodeExport.sh"]
+CMD ["/opt/bitnami/scripts/kafka/run.sh"]

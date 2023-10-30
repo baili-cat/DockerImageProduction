@@ -1,0 +1,22 @@
+version: '3'
+services:
+  neo4j:
+    image: {imageName}
+    container_name: {serviceName}
+    ports:
+      - {serverPort}:{dockerPort} #http
+      - 7687:7687 #bolt
+      #- "2004:2004" #metrics
+    environment:
+      NEO4J_AUTH: "{neo4j_user_password}"
+      #NEO4J_metrics_prometheus_enabled: "true"
+      #NEO4J_metrics_prometheus_endpoint: "0.0.0.0:2004"
+    volumes:
+      - ./data/neo4j:/data
+      - ./logs/neo4j:/logs
+# 采用网络模式时可配合ports使用，testOps部署后默认名为testOps_network_default，可通过接口参数修改
+networks:
+  default:
+    external:
+      name: testOps_network_default
+#metrics

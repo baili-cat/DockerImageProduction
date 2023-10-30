@@ -1,0 +1,28 @@
+version: '3'
+services:
+  {serviceName}:
+    image: {imageName}
+    hostname: {hostname}
+    container_name:  {serviceName}
+    restart: always
+    command: [ "--requirepass", "{redis_password}" ]
+    ports:
+      - {serverPort}:{dockerPort}
+      #- 9121:9121 #metrics
+    environment:
+      REDIS_PASSWORD: "{redis_password}" #redis_exporter
+      EXPORTER_ENABLE: "{exporter_enable}"
+      NODE_EXPORTER_PATH: "{node_exporter_path}"
+      BAILI_XCENTER_SERVER: "{baili_xcenter_server}"
+      BAILI_XCENTER_ORGCODE: "{baili_xcenter_orgcode}"
+      BAILI_APPLICATION_SERVER: "{baili_application_server}"
+      BAILI_COLLECTOR_SERVER: "{baili_collector_server}"
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./data/redis:/data
+      - ./nodeExport:/nodeExport
+# 采用网络模式时可配合ports使用，testOps部署后默认名为testOps_network_default，可通过接口参数修改
+networks:
+  default:
+    external:
+      name: testOps_network_default
